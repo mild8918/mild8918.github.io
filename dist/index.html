@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MILD - Multi-Layer Diffusion Strategy for Multi-IP Aware Human Erasing</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #2c3e50;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      border: 1px solid #dee2e6;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1e3a5f 0%, #2c5aa0 100%);
+      color: white;
+      padding: 40px;
+      text-align: center;
+      position: relative;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+      opacity: 0.3;
+    }
+
+    .title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      position: relative;
+      z-index: 1;
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: #ecf0f1;
+      font-weight: 300;
+      position: relative;
+      z-index: 1;
+    }
+
+    .content {
+      padding: 40px;
+    }
+
+    .author-section {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .author {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+
+    .affiliation {
+      font-size: 1rem;
+      color: #7f8c8d;
+      font-style: italic;
+    }
+
+    .abstract-section {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 30px;
+      margin-bottom: 30px;
+      border-left: 4px solid #4a6fa5;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 20px;
+      background: #4a6fa5;
+      margin-right: 10px;
+      border-radius: 2px;
+    }
+
+    .abstract-text {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: #555;
+      text-align: justify;
+    }
+
+    .keywords {
+      background: transparent;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 30px;
+      border: none;
+    }
+
+    .keyword-tag {
+      display: inline-block;
+      background: transparent;
+      color: #495057;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      margin: 3px;
+      font-weight: 500;
+      border: 1px solid #dee2e6;
+      transition: all 0.2s ease;
+    }
+
+    .keyword-tag:hover {
+      background: #f8f9fa;
+      border-color: #4a6fa5;
+      color: #4a6fa5;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+    }
+
+    .btn {
+      padding: 10px 24px;
+      border: 2px solid;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+    }
+
+    .btn-primary {
+      border-color: #4a6fa5;
+      color: #4a6fa5;
+    }
+
+    .btn-primary:hover {
+      background: #4a6fa5;
+      color: white;
+    }
+
+    .btn-secondary {
+      border-color: #6c757d;
+      color: #6c757d;
+    }
+
+    .btn-secondary:hover {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-tertiary {
+      border-color: #868e96;
+      color: #868e96;
+    }
+
+    .btn-tertiary:hover {
+      background: #868e96;
+      color: white;
+    }
+
+    .btn-quaternary {
+      border-color: #adb5bd;
+      color: #adb5bd;
+    }
+
+    .btn-quaternary:hover {
+      background: #adb5bd;
+      color: white;
+    }
+
+    .btn-highlight {
+      background: #4a6fa5;
+      color: white;
+      font-size: 1.1rem;
+      padding: 14px 32px;
+      margin-top: 30px;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(74, 111, 165, 0.2);
+      border: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+
+
+    .btn-highlight:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(74, 111, 165, 0.3);
+      background: #2c5aa0;
+    }
+
+    .demo-animation-section {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 30px;
+      margin-bottom: 30px;
+      border-left: 4px solid #4a6fa5;
+      text-align: center;
+    }
+
+    .gif-container {
+      margin-top: 20px;
+    }
+
+    .demo-gif {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      border: 1px solid #dee2e6;
+    }
+
+    .gif-caption {
+      margin-top: 15px;
+      font-size: 0.95rem;
+      color: #6c757d;
+      font-style: italic;
+      line-height: 1.6;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .demo-section {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 30px;
+      border-top: 2px dashed #dee2e6;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .footer {
+      background: #6c757d;
+      color: #f8f9fa;
+      text-align: center;
+      padding: 20px;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      .title {
+        font-size: 2rem;
+      }
+
+      .content {
+        padding: 20px;
+      }
+
+      .buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .btn {
+        width: 200px;
+        justify-content: center;
+      }
+
+      .btn-highlight {
+        font-size: 1rem;
+        padding: 12px 28px;
+        width: 200px;
+        justify-content: center;
+      }
+
+      .demo-animation-section {
+        padding: 20px;
+      }
+
+      .gif-caption {
+        font-size: 0.9rem;
+        margin-top: 10px;
+      }
+    }
+
+    .highlight {
+      background: #e3f2fd;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: 600;
+      color: #1e3a5f;
+      border: 1px solid #bbdefb;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="title">MILD</h1>
+      <p class="subtitle">Multi-Layer Diffusion Strategy for Multi-IP Aware Human Erasing</p>
+    </div>
+
+    <div class="content">
+      <div class="buttons">
+        <a href="#" class="btn btn-primary">
+          📄 Read Paper
+        </a>
+        <a href="#" class="btn btn-secondary">
+          💻 View Code
+        </a>
+        <a href="#" class="btn btn-quaternary">
+          📊 Dataset
+        </a>
+      </div>
+
+      <div class="demo-animation-section">
+        <h2 class="section-title">Results Demonstration</h2>
+        <div class="gif-container">
+          <img src="animation_compressed.gif" alt="MILD Human Erasing Results" class="demo-gif">
+          <p class="gif-caption">Interactive demonstration showing original images and MILD processing results. Each
+            frame shows the input image followed by the human erasing result, showcasing our method's effectiveness
+            across different scenarios.</p>
+        </div>
+      </div>
+
+      <div class="abstract-section">
+        <h2 class="section-title">Abstract</h2>
+        <p class="abstract-text">
+          Recent years have witnessed the remarkable success of diffusion models, especially in various image-customized
+          tasks. Work on single-IP removal has made notable advances by leveraging explicit mask guidance and
+          semantic-aware inpainting. However, existing single-IP methods still suffer from significant "IP-Overlapping"
+          issues, particularly under IP-IP occlusions, IP-object entanglements, and IP-background ambiguities. Although
+          these approaches often rely on curated datasets, they continue to struggle with dense occlusions, intricate
+          backgrounds, and the lack of comprehensive data capturing diverse real-world IP interactions, which further
+          limits their robustness and generalization.
+        </p>
+        <p class="abstract-text">
+          In this work, we introduce <span class="highlight">Multi-Instance Layered Diffusion (MILD)</span>, a novel
+          strategy that redefines human erasing as a multi-layer generation process. Specifically, MILD decomposes the
+          prediction into semantically disentangled layers, separately reconstructing each foreground instance and the
+          underlying background. To enhance contextual reasoning, we propose Human Morphology Guidance, a conditioning
+          mechanism that injects pose and parsing priors into the diffusion process. Furthermore, we develop Mask-Aware
+          Attention, an adaptive attention recalibration module designed to dynamically suppress semantic leakage
+          between masked and unmasked regions.
+        </p>
+        <p class="abstract-text">
+          We also contribute a high-quality dataset capturing pose variations, occlusions, and background complexity in
+          interactive scenarios. Extensive experiments demonstrate that MILD consistently outperforms existing methods
+          and sets a new state of the art in the challenging human erasing benchmarks.
+        </p>
+      </div>
+
+      <div class="keywords">
+        <h3 class="section-title">Keywords</h3>
+        <span class="keyword-tag">Diffusion Models</span>
+        <span class="keyword-tag">Human Erasing</span>
+        <span class="keyword-tag">Multi-IP</span>
+        <span class="keyword-tag">Computer Vision</span>
+        <span class="keyword-tag">Image Inpainting</span>
+        <span class="keyword-tag">Deep Learning</span>
+      </div>
+
+
+
+      <div class="demo-section">
+        <a href="#" class="btn btn-highlight">
+          🚀 Try This!
+        </a>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>&copy; 2025 MILD Research Project. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+
+</html>
